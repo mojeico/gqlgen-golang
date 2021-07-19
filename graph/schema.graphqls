@@ -1,44 +1,47 @@
 type User {
-  id: ID!
-  username: String!
-  email: String!
-  meetups: [Meetup!]!
+    id: ID!
+    username: String!
+    email: String!
+    meetups: [Meetup!]!
 }
 
 
 input NewUser {
-  username: String!
-  email: String!
+    username: String!
+    email: String!
 }
 
 type Meetup {
-  id: ID!
-  name: String!
-  description: String!
-  user: User!
+    id: ID!
+    name: String!
+    description: String!
+    user: User!
 }
 
 input NewMeetup{
-  name:String!
-  description:String!
+    name:String!
+    description:String!
 }
 
 input UpdateMeetup {
-  name: String
-  description: String
+    name: String
+    description: String
 }
 
 
 type Mutation{
-  createMeetup(input: NewMeetup!): Meetup!
-  updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
+    createMeetup(input: NewMeetup!): Meetup!
+    updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
 
-  createUser(input: NewUser!): User!
+    createUser(input: NewUser!): User!
 }
 
 
 type Query {
-  getAllMeetups:[Meetup!]!
-  getMutationById:Meetup!
-  getAllUsers:[User!]!
+    getAllMeetups:[Meetup!]!
+    getMutationById(id:ID!):Meetup!
+
+    getAllUsers:[User!]!
+    getUserById(id:ID!):User!
+
 }

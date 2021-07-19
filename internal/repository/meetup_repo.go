@@ -15,7 +15,7 @@ import (
 type MeetupsRepo interface {
 	GetAllMeetups() ([]*models.Meetup, error)
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
-	GetMeetupByID(id string) *models.Meetup
+	GetMeetupByID(id string) (*models.Meetup, error)
 	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
 }
 
@@ -105,7 +105,7 @@ func (repo *meetupsRepo) CreateMeetup(meetup model.NewMeetup) (*models.Meetup, e
 	return &models.Meetup{}, err
 }
 
-func (repo *meetupsRepo) GetMeetupByID(id string) *models.Meetup {
+func (repo *meetupsRepo) GetMeetupByID(id string) (*models.Meetup, error) {
 
 	collection := repo.client.Database("myapp").Collection("meetup")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
@@ -119,6 +119,6 @@ func (repo *meetupsRepo) GetMeetupByID(id string) *models.Meetup {
 		log.Fatal(err)
 	}
 
-	return &meetup
+	return &meetup, err
 
 }

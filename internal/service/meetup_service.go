@@ -9,7 +9,7 @@ import (
 type MeetupsService interface {
 	GetAllMeetups() ([]*models.Meetup, error)
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
-	GetMeetupByID(id string) *models.Meetup
+	GetMeetupByID(id string) (*models.Meetup, error)
 	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
 }
 
@@ -36,7 +36,7 @@ func (service meetupsService) CreateMeetup(meetup model.NewMeetup) (*models.Meet
 	return service.repo.CreateMeetup(meetup)
 }
 
-func (service meetupsService) GetMeetupByID(id string) *models.Meetup {
+func (service meetupsService) GetMeetupByID(id string) (*models.Meetup, error) {
 	return service.repo.GetMeetupByID(id)
 
 }

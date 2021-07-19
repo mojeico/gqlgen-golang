@@ -9,7 +9,7 @@ import (
 type UserService interface {
 	GetAllUsers() ([]*models.User, error)
 	CreateUser(meetup model.NewUser) (*models.User, error)
-	GetUserByID(id string) *models.User
+	GetUserByID(id string) (*models.User, error)
 }
 
 type userService struct {
@@ -30,6 +30,6 @@ func (service userService) CreateUser(user model.NewUser) (*models.User, error) 
 	return service.repo.CreateUser(user)
 }
 
-func (service userService) GetUserByID(id string) *models.User {
+func (service userService) GetUserByID(id string) (*models.User, error) {
 	return service.repo.GetUserByID(id)
 }

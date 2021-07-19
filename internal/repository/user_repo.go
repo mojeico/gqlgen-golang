@@ -5,6 +5,7 @@ import (
 	"github.com/mojeico/gqlgen-golang/graph/model"
 	"github.com/mojeico/gqlgen-golang/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 
@@ -14,7 +15,7 @@ import (
 type UserRepo interface {
 	GetAllUsers() ([]*models.User, error)
 	CreateUser(meetup model.NewUser) (*models.User, error)
-	GetUserByID(id string) *models.User
+	GetUserByID(id string) (*models.User, error)
 }
 
 type userRepo struct {
@@ -76,20 +77,20 @@ func (repo *userRepo) CreateUser(meetup model.NewUser) (*models.User, error) {
 	return &models.User{}, err
 }
 
-func (repo *userRepo) GetUserByID(id string) *models.User {
+func (repo *userRepo) GetUserByID(id string) (*models.User, error) {
 
 	collection := repo.client.Database("myapp").Collection("user")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	result, err := collection.Find(ctx, bson.M{"_id": id})
+	mongoId, _ := primitive.ObjectIDFromHex(id)
+
+	var user models.User
+	err := collection.FindOne(ctx, bson.M{"_id": mongoId}).Decode(&user)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	meetup := &models.User{}
-	result.Decode(meetup)
-
-	return meetup
+	return &user, err
 
 }
