@@ -1,0 +1,42 @@
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  meetups: [Meetup!]!
+}
+
+
+input NewUser {
+  username: String!
+  email: String!
+}
+
+type Meetup {
+  id: ID!
+  name: String!
+  description: String!
+  user: User!
+}
+
+input NewMeetup{
+  name:String!
+  description:String!
+}
+
+input UpdateMeetup {
+  name: String
+  description: String
+}
+
+
+type Mutation{
+  createMeetup(input: NewMeetup!): Meetup!
+  updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
+  createUser(input: NewUser!): User!
+}
+
+
+type Query {
+  getAllMeetups:[Meetup!]!
+  getAllUsers:[User!]!
+}
