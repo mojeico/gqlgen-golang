@@ -23,6 +23,10 @@ input NewMeetup{
     description:String!
 }
 
+input MeetupFilter{
+    name: String
+}
+
 input UpdateMeetup {
     name: String
     description: String
@@ -38,7 +42,7 @@ type Mutation{
 
 
 type Query {
-    getAllMeetups:[Meetup!]!
+    getAllMeetups(filter: MeetupFilter, limit: Int = 10, offset: Int = 0):[Meetup!]!
     getMeetupById(id:ID!):Meetup!
 
     getAllUsers:[User!]!

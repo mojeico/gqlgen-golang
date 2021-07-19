@@ -7,7 +7,7 @@ import (
 )
 
 type MeetupsService interface {
-	GetAllMeetups() ([]*models.Meetup, error)
+	GetAllMeetups(filter *model.MeetupFilter, limit int, offset int) ([]*models.Meetup, error)
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
 	GetMeetupByID(id string) (*models.Meetup, error)
 	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
@@ -32,8 +32,9 @@ func (service meetupsService) UpdateMeetup(id string, meetup *model.UpdateMeetup
 	return service.repo.UpdateMeetup(id, meetup)
 }
 
-func (service meetupsService) GetAllMeetups() ([]*models.Meetup, error) {
-	meetups, err := service.repo.GetAllMeetups()
+func (service meetupsService) GetAllMeetups(filter *model.MeetupFilter, limit int, offset int) ([]*models.Meetup, error) {
+
+	meetups, err := service.repo.GetAllMeetups(filter, int64(limit), int64(offset))
 	return meetups, err
 }
 

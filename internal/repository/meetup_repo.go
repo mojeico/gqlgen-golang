@@ -7,12 +7,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"time"
 )
 
 type MeetupsRepo interface {
-	GetAllMeetups() ([]*models.Meetup, error)
+	GetAllMeetups(filter *model.MeetupFilter, limit int64, offset int64) ([]*models.Meetup, error)
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
 	GetMeetupByID(id string) (*models.Meetup, error)
 	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
@@ -67,16 +68,25 @@ func (repo meetupsRepo) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*mo
 	return &updatedModel, err
 }
 
-func (repo *meetupsRepo) GetAllMeetups() ([]*models.Meetup, error) {
+func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, offset int64) ([]*models.Meetup, error) {
 
 	collection := repo.client.Database("myapp").Collection("meetup")
+
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	filter := bson.D{{}}
+	mongoFilter := bson.D{}
+	if *filter.Name != "" {
+		mongoFilter = bson.D{{"name", filter.Name}}
+	}
 
 	var tasks []*models.Meetup
 
-	cur, err := collection.Find(ctx, filter)
+	opts := options.FindOptions{
+		Skip:  &offset,
+		Limit: &limit,
+	}
+
+	cur, err := collection.Find(ctx, mongoFilter, &opts)
 	if err != nil {
 		return tasks, err
 	}

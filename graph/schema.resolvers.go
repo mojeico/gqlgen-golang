@@ -37,8 +37,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	return user, err
 }
 
-func (r *queryResolver) GetAllMeetups(ctx context.Context) ([]*models.Meetup, error) {
-	meetup, err := r.MeetupsService.GetAllMeetups()
+func (r *queryResolver) GetAllMeetups(ctx context.Context, filter *model.MeetupFilter, limit *int, offset *int) ([]*models.Meetup, error) {
+	meetup, err := r.MeetupsService.GetAllMeetups(filter, *limit, *offset)
 	return meetup, err
 }
 
