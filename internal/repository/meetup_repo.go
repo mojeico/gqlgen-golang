@@ -5,6 +5,7 @@ import (
 	"github.com/mojeico/gqlgen-golang/graph/model"
 	"github.com/mojeico/gqlgen-golang/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 
@@ -15,6 +16,7 @@ type MeetupsRepo interface {
 	GetAllMeetups() ([]*models.Meetup, error)
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
 	GetMeetupByID(id string) *models.Meetup
+	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
 }
 
 type meetupsRepo struct {
@@ -25,6 +27,33 @@ func NewMeetupsRepo(client *mongo.Client) MeetupsRepo {
 	return &meetupsRepo{
 		client: client,
 	}
+}
+
+func (repo meetupsRepo) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error) {
+
+	collection := repo.client.Database("myapp").Collection("meetup")
+	mongoId, _ := primitive.ObjectIDFromHex(id)
+
+	_, err := collection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": mongoId},
+		bson.D{
+			{"$set", bson.D{
+				{"name", meetup.Name},
+				{"description", meetup.Description},
+			}},
+		},
+	)
+
+	var updatedModel models.Meetup
+
+	err = collection.FindOne(context.Background(), bson.M{"_id": mongoId}).Decode(&updatedModel)
+
+	if err != nil {
+		print(err)
+	}
+
+	return &updatedModel, err
 }
 
 func (repo *meetupsRepo) GetAllMeetups() ([]*models.Meetup, error) {
@@ -81,15 +110,15 @@ func (repo *meetupsRepo) GetMeetupByID(id string) *models.Meetup {
 	collection := repo.client.Database("myapp").Collection("meetup")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	result, err := collection.Find(ctx, bson.M{"_id": id})
+	mongoId, _ := primitive.ObjectIDFromHex(id)
+
+	var meetup models.Meetup
+	err := collection.FindOne(ctx, bson.M{"_id": mongoId}).Decode(&meetup)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	meetup := &models.Meetup{}
-	result.Decode(meetup)
-
-	return meetup
+	return &meetup
 
 }

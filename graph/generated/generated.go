@@ -60,8 +60,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllMeetups func(childComplexity int) int
-		GetAllUsers   func(childComplexity int) int
+		GetAllMeetups   func(childComplexity int) int
+		GetAllUsers     func(childComplexity int) int
+		GetMutationByID func(childComplexity int) int
 	}
 
 	User struct {
@@ -73,6 +74,8 @@ type ComplexityRoot struct {
 }
 
 type MeetupResolver interface {
+	ID(ctx context.Context, obj *models.Meetup) (string, error)
+
 	User(ctx context.Context, obj *models.Meetup) (*models.User, error)
 }
 type MutationResolver interface {
@@ -82,9 +85,12 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetAllMeetups(ctx context.Context) ([]*models.Meetup, error)
+	GetMutationByID(ctx context.Context) (*models.Meetup, error)
 	GetAllUsers(ctx context.Context) ([]*models.User, error)
 }
 type UserResolver interface {
+	ID(ctx context.Context, obj *models.User) (string, error)
+
 	Meetups(ctx context.Context, obj *models.User) ([]*models.Meetup, error)
 }
 
@@ -180,6 +186,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAllUsers(childComplexity), true
+
+	case "Query.getMutationById":
+		if e.complexity.Query.GetMutationByID == nil {
+			break
+		}
+
+		return e.complexity.Query.GetMutationByID(childComplexity), true
 
 	case "User.email":
 		if e.complexity.User.Email == nil {
@@ -307,12 +320,14 @@ input UpdateMeetup {
 type Mutation{
   createMeetup(input: NewMeetup!): Meetup!
   updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
+
   createUser(input: NewUser!): User!
 }
 
 
 type Query {
   getAllMeetups:[Meetup!]!
+  getMutationById:Meetup!
   getAllUsers:[User!]!
 }`, BuiltIn: false},
 }
@@ -440,14 +455,14 @@ func (ec *executionContext) _Meetup_id(ctx context.Context, field graphql.Collec
 		Object:     "Meetup",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return ec.resolvers.Meetup().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -730,6 +745,41 @@ func (ec *executionContext) _Query_getAllMeetups(ctx context.Context, field grap
 	return ec.marshalNMeetup2ᚕᚖgithubᚗcomᚋmojeicoᚋgqlgenᚑgolangᚋinternalᚋmodelsᚐMeetupᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_getMutationById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetMutationByID(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meetup)
+	fc.Result = res
+	return ec.marshalNMeetup2ᚖgithubᚗcomᚋmojeicoᚋgqlgenᚑgolangᚋinternalᚋmodelsᚐMeetup(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getAllUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -847,14 +897,14 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		Object:     "User",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return ec.resolvers.User().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2167,10 +2217,19 @@ func (ec *executionContext) _Meetup(ctx context.Context, sel ast.SelectionSet, o
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Meetup")
 		case "id":
-			out.Values[i] = ec._Meetup_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Meetup_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "name":
 			out.Values[i] = ec._Meetup_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2276,6 +2335,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "getMutationById":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getMutationById(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "getAllUsers":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -2317,10 +2390,19 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("User")
 		case "id":
-			out.Values[i] = ec._User_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "username":
 			out.Values[i] = ec._User_username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

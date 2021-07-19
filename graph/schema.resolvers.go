@@ -12,6 +12,10 @@ import (
 	"github.com/mojeico/gqlgen-golang/internal/models"
 )
 
+func (r *meetupResolver) ID(ctx context.Context, obj *models.Meetup) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *meetupResolver) User(ctx context.Context, obj *models.Meetup) (*models.User, error) {
 	user := r.UserService.GetUserByID(obj.UserID)
 	return user, nil
@@ -23,7 +27,8 @@ func (r *mutationResolver) CreateMeetup(ctx context.Context, input model.NewMeet
 }
 
 func (r *mutationResolver) UpdateMeetup(ctx context.Context, id string, input *model.UpdateMeetup) (*models.Meetup, error) {
-	panic(fmt.Errorf("not implemented"))
+	meetup, err := r.MeetupsService.UpdateMeetup(id, input)
+	return meetup, err
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*models.User, error) {
@@ -36,9 +41,17 @@ func (r *queryResolver) GetAllMeetups(ctx context.Context) ([]*models.Meetup, er
 	return meetup, err
 }
 
+func (r *queryResolver) GetMutationByID(ctx context.Context) (*models.Meetup, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) GetAllUsers(ctx context.Context) ([]*models.User, error) {
 	user, err := r.UserService.GetAllUsers()
 	return user, err
+}
+
+func (r *userResolver) ID(ctx context.Context, obj *models.User) (string, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *userResolver) Meetups(ctx context.Context, obj *models.User) ([]*models.Meetup, error) {

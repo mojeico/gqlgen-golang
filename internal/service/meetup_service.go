@@ -10,6 +10,7 @@ type MeetupsService interface {
 	GetAllMeetups() ([]*models.Meetup, error)
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
 	GetMeetupByID(id string) *models.Meetup
+	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
 }
 
 type meetupsService struct {
@@ -20,6 +21,10 @@ func NewMeetupsRepo(repo repository.MeetupsRepo) MeetupsService {
 	return &meetupsService{
 		repo: repo,
 	}
+}
+
+func (service meetupsService) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error) {
+	return service.repo.UpdateMeetup(id, meetup)
 }
 
 func (service meetupsService) GetAllMeetups() ([]*models.Meetup, error) {
