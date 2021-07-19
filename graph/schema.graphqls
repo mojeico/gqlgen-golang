@@ -32,16 +32,15 @@ input UpdateMeetup {
 type Mutation{
     createMeetup(input: NewMeetup!): Meetup!
     updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
-
+    deleteMeetup(id:ID!): Boolean
     createUser(input: NewUser!): User!
 }
 
 
 type Query {
     getAllMeetups:[Meetup!]!
-    getMutationById(id:ID!):Meetup!
+    getMeetupById(id:ID!):Meetup!
 
     getAllUsers:[User!]!
     getUserById(id:ID!):User!
-
 }

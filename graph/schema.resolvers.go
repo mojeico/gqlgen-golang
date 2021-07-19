@@ -27,6 +27,11 @@ func (r *mutationResolver) UpdateMeetup(ctx context.Context, id string, input *m
 	return meetup, err
 }
 
+func (r *mutationResolver) DeleteMeetup(ctx context.Context, id string) (*bool, error) {
+	result, err := r.MeetupsService.DeleteMeetup(id)
+	return result, err
+}
+
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*models.User, error) {
 	user, err := r.UserService.CreateUser(input)
 	return user, err
@@ -37,7 +42,7 @@ func (r *queryResolver) GetAllMeetups(ctx context.Context) ([]*models.Meetup, er
 	return meetup, err
 }
 
-func (r *queryResolver) GetMutationByID(ctx context.Context, id string) (*models.Meetup, error) {
+func (r *queryResolver) GetMeetupByID(ctx context.Context, id string) (*models.Meetup, error) {
 	meetup, err := r.MeetupsService.GetMeetupByID(id)
 	return meetup, err
 }

@@ -56,14 +56,15 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateMeetup func(childComplexity int, input model.NewMeetup) int
 		CreateUser   func(childComplexity int, input model.NewUser) int
+		DeleteMeetup func(childComplexity int, id string) int
 		UpdateMeetup func(childComplexity int, id string, input *model.UpdateMeetup) int
 	}
 
 	Query struct {
-		GetAllMeetups   func(childComplexity int) int
-		GetAllUsers     func(childComplexity int) int
-		GetMutationByID func(childComplexity int, id string) int
-		GetUserByID     func(childComplexity int, id string) int
+		GetAllMeetups func(childComplexity int) int
+		GetAllUsers   func(childComplexity int) int
+		GetMeetupByID func(childComplexity int, id string) int
+		GetUserByID   func(childComplexity int, id string) int
 	}
 
 	User struct {
@@ -80,11 +81,12 @@ type MeetupResolver interface {
 type MutationResolver interface {
 	CreateMeetup(ctx context.Context, input model.NewMeetup) (*models.Meetup, error)
 	UpdateMeetup(ctx context.Context, id string, input *model.UpdateMeetup) (*models.Meetup, error)
+	DeleteMeetup(ctx context.Context, id string) (*bool, error)
 	CreateUser(ctx context.Context, input model.NewUser) (*models.User, error)
 }
 type QueryResolver interface {
 	GetAllMeetups(ctx context.Context) ([]*models.Meetup, error)
-	GetMutationByID(ctx context.Context, id string) (*models.Meetup, error)
+	GetMeetupByID(ctx context.Context, id string) (*models.Meetup, error)
 	GetAllUsers(ctx context.Context) ([]*models.User, error)
 	GetUserByID(ctx context.Context, id string) (*models.User, error)
 }
@@ -159,6 +161,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.NewUser)), true
 
+	case "Mutation.deleteMeetup":
+		if e.complexity.Mutation.DeleteMeetup == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteMeetup_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteMeetup(childComplexity, args["id"].(string)), true
+
 	case "Mutation.updateMeetup":
 		if e.complexity.Mutation.UpdateMeetup == nil {
 			break
@@ -185,17 +199,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetAllUsers(childComplexity), true
 
-	case "Query.getMutationById":
-		if e.complexity.Query.GetMutationByID == nil {
+	case "Query.getMeetupById":
+		if e.complexity.Query.GetMeetupByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getMutationById_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getMeetupById_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetMutationByID(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.GetMeetupByID(childComplexity, args["id"].(string)), true
 
 	case "Query.getUserById":
 		if e.complexity.Query.GetUserByID == nil {
@@ -302,51 +316,50 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type User {
-  id: ID!
-  username: String!
-  email: String!
-  meetups: [Meetup!]!
+    id: ID!
+    username: String!
+    email: String!
+    meetups: [Meetup!]!
 }
 
 
 input NewUser {
-  username: String!
-  email: String!
+    username: String!
+    email: String!
 }
 
 type Meetup {
-  id: ID!
-  name: String!
-  description: String!
-  user: User!
+    id: ID!
+    name: String!
+    description: String!
+    user: User!
 }
 
 input NewMeetup{
-  name:String!
-  description:String!
+    name:String!
+    description:String!
 }
 
 input UpdateMeetup {
-  name: String
-  description: String
+    name: String
+    description: String
 }
 
 
 type Mutation{
-  createMeetup(input: NewMeetup!): Meetup!
-  updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
-
-  createUser(input: NewUser!): User!
+    createMeetup(input: NewMeetup!): Meetup!
+    updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
+    deleteMeetup(id:ID!): Boolean
+    createUser(input: NewUser!): User!
 }
 
 
 type Query {
-  getAllMeetups:[Meetup!]!
-  getMutationById(id:ID!):Meetup!
+    getAllMeetups:[Meetup!]!
+    getMeetupById(id:ID!):Meetup!
 
-  getAllUsers:[User!]!
-  getUserById(id:ID!):User!
-
+    getAllUsers:[User!]!
+    getUserById(id:ID!):User!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -382,6 +395,21 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteMeetup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -424,7 +452,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getMutationById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getMeetupById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -716,6 +744,45 @@ func (ec *executionContext) _Mutation_updateMeetup(ctx context.Context, field gr
 	return ec.marshalNMeetup2ᚖgithubᚗcomᚋmojeicoᚋgqlgenᚑgolangᚋinternalᚋmodelsᚐMeetup(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_deleteMeetup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteMeetup_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteMeetup(rctx, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -793,7 +860,7 @@ func (ec *executionContext) _Query_getAllMeetups(ctx context.Context, field grap
 	return ec.marshalNMeetup2ᚕᚖgithubᚗcomᚋmojeicoᚋgqlgenᚑgolangᚋinternalᚋmodelsᚐMeetupᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_getMutationById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_getMeetupById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -810,7 +877,7 @@ func (ec *executionContext) _Query_getMutationById(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getMutationById_args(ctx, rawArgs)
+	args, err := ec.field_Query_getMeetupById_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -818,7 +885,7 @@ func (ec *executionContext) _Query_getMutationById(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetMutationByID(rctx, args["id"].(string))
+		return ec.resolvers.Query().GetMeetupByID(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2378,6 +2445,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "deleteMeetup":
+			out.Values[i] = ec._Mutation_deleteMeetup(ctx, field)
 		case "createUser":
 			out.Values[i] = ec._Mutation_createUser(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -2423,7 +2492,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "getMutationById":
+		case "getMeetupById":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -2431,7 +2500,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getMutationById(ctx, field)
+				res = ec._Query_getMeetupById(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

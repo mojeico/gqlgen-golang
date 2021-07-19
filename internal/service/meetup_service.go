@@ -11,6 +11,7 @@ type MeetupsService interface {
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
 	GetMeetupByID(id string) (*models.Meetup, error)
 	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
+	DeleteMeetup(id string) (*bool, error)
 }
 
 type meetupsService struct {
@@ -21,6 +22,10 @@ func NewMeetupsRepo(repo repository.MeetupsRepo) MeetupsService {
 	return &meetupsService{
 		repo: repo,
 	}
+}
+
+func (service meetupsService) DeleteMeetup(id string) (*bool, error) {
+	return service.repo.DeleteMeetup(id)
 }
 
 func (service meetupsService) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error) {

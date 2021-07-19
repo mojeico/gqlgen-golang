@@ -7,6 +7,7 @@ import (
 	"github.com/mojeico/gqlgen-golang/graph/generated"
 	"github.com/mojeico/gqlgen-golang/internal/repository"
 	"github.com/mojeico/gqlgen-golang/internal/service"
+	"github.com/mojeico/gqlgen-golang/pkg/database"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +16,7 @@ import (
 const defaultPort = "8080"
 
 var (
-	mongo = repository.NewMongo()
+	mongo = database.NewMongo()
 
 	userRepo    = repository.NewUserRepo(mongo)
 	userService = service.NewUserService(userRepo)

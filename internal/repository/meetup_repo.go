@@ -8,7 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
-
 	"time"
 )
 
@@ -17,6 +16,7 @@ type MeetupsRepo interface {
 	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
 	GetMeetupByID(id string) (*models.Meetup, error)
 	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
+	DeleteMeetup(id string) (*bool, error)
 }
 
 type meetupsRepo struct {
@@ -27,6 +27,17 @@ func NewMeetupsRepo(client *mongo.Client) MeetupsRepo {
 	return &meetupsRepo{
 		client: client,
 	}
+}
+
+func (repo meetupsRepo) DeleteMeetup(id string) (*bool, error) {
+
+	collection := repo.client.Database("myapp").Collection("meetup")
+	mongoId, _ := primitive.ObjectIDFromHex(id)
+
+	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": mongoId})
+
+	resultBool := result.DeletedCount != 0
+	return &resultBool, err
 }
 
 func (repo meetupsRepo) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error) {
