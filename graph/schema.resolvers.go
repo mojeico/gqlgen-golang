@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mojeico/gqlgen-golang/graph/generated"
+	"github.com/mojeico/gqlgen-golang/internal/middleware"
 	"github.com/mojeico/gqlgen-golang/internal/model"
 )
 
@@ -66,9 +67,45 @@ func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInp
 	}, nil
 }
 
+func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
+	user, err := r.UserService.GetUserByEmail(input.Email)
+
+	if err != nil {
+		return nil, ErrorBadCredential
+	}
+
+	err = user.ComparePassword(input.Password)
+
+	if err != nil {
+		return nil, ErrorBadCredential
+	}
+
+	token, err := user.GenToken()
+
+	if err != nil {
+		return nil, errors.New("something wrong with token")
+	}
+
+	return &model.AuthResponse{
+		AuthToken: token,
+		User:      user,
+	}, nil
+}
+
 func (r *mutationResolver) CreateMeetup(ctx context.Context, input model.NewMeetup) (*model.Meetup, error) {
-	meetup, err := r.MeetupsService.CreateMeetup(input)
-	return meetup, err
+	currentUser, err := middleware.GetCurrentUserFromContext(ctx)
+
+	if err != nil {
+		return nil, UserUnauthenticated
+	}
+
+	newMeetup := model.Meetup{
+		Name:        input.Name,
+		Description: input.Description,
+		UserID:      currentUser.ID,
+	}
+
+	return r.MeetupsService.CreateMeetup(newMeetup)
 }
 
 func (r *mutationResolver) UpdateMeetup(ctx context.Context, id string, input *model.UpdateMeetup) (*model.Meetup, error) {
@@ -118,3 +155,14 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 type meetupResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+var (
+	ErrorBadCredential  = errors.New("email/password combination doesn't work")
+	UserUnauthenticated = errors.New("user is not unauthenticated")
+)

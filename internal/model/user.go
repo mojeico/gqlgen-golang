@@ -46,8 +46,8 @@ type tokenClaims struct {
 
 func (u *User) GenToken() (*AuthToken, error) {
 
-	expirationAt := time.Now().Add(tokenTime).UnixNano() / int64(time.Millisecond)
-	currentTime := time.Now().UnixNano() / int64(time.Millisecond)
+	expirationAt := time.Now().Add(tokenTime).Unix()
+	currentTime := time.Now().Unix()
 
 	hmacSampleSecret := []byte(signInKey)
 
@@ -68,4 +68,13 @@ func (u *User) GenToken() (*AuthToken, error) {
 		AccesToken: tokenString,
 		ExpiredAt:  int(expirationAt),
 	}, nil
+}
+
+func (u *User) ComparePassword(password string) error {
+
+	bytePassword := []byte(password)
+	byteHashedPassword := []byte(u.Password)
+
+	return bcrypt.CompareHashAndPassword(byteHashedPassword, bytePassword)
+
 }

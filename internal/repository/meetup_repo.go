@@ -14,7 +14,7 @@ import (
 
 type MeetupsRepo interface {
 	GetAllMeetups(filter *model.MeetupFilter, limit int64, offset int64) ([]*model.Meetup, error)
-	CreateMeetup(meetup model.NewMeetup) (*model.Meetup, error)
+	CreateMeetup(meetup model.Meetup) (*model.Meetup, error)
 	GetMeetupByID(id string) (*model.Meetup, error)
 	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*model.Meetup, error)
 	DeleteMeetup(id string) (*bool, error)
@@ -118,7 +118,7 @@ func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, 
 
 }
 
-func (repo *meetupsRepo) CreateMeetup(meetup model.NewMeetup) (*model.Meetup, error) {
+func (repo *meetupsRepo) CreateMeetup(meetup model.Meetup) (*model.Meetup, error) {
 
 	ctx := context.Background()
 

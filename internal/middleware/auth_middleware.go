@@ -8,11 +8,16 @@ import (
 	"github.com/mojeico/gqlgen-golang/internal/repository"
 	"github.com/pkg/errors"
 	"net/http"
-	"os"
 	"strings"
+	"time"
 )
 
 var CurrentUserKey = "currentUser"
+
+const (
+	tokenTime = 24 * 7 * time.Hour // 7 days for token
+	signInKey = "registerKey"
+)
 
 func AuthMiddleware(userRepo repository.UserRepo) func(handler http.Handler) http.Handler {
 
@@ -74,7 +79,7 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 	}
 
 	jwtToken, err := request.ParseFromRequest(r, authExtractor, func(token *jwt.Token) (interface{}, error) {
-		t := []byte(os.Getenv("JWT_SECRET"))
+		t := []byte(signInKey)
 		return t, nil
 	})
 
