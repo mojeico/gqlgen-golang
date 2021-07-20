@@ -13,8 +13,10 @@ func NewMongo() *mongo.Client {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017/"))
 
 	if err != nil {
-		log.Fatal(err)
-
+		log.Println(err)
+		panic(err.Error())
+		return nil
 	}
+
 	return client
 }

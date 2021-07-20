@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/mojeico/gqlgen-golang/graph/model"
 	"github.com/mojeico/gqlgen-golang/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -74,9 +75,12 @@ func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, 
 
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	mongoFilter := bson.D{}
+	mongoFilter := bson.M{}
 	if *filter.Name != "" {
-		mongoFilter = bson.D{{"name", filter.Name}}
+		mongoFilter = bson.M{"name": bson.M{"$regex": primitive.Regex{
+			Pattern: fmt.Sprintf("^([%s])\\w+", *filter.Name),
+			Options: "i",
+		}}}
 	}
 
 	var tasks []*models.Meetup
