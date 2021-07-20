@@ -2,20 +2,20 @@ package repository
 
 import (
 	"context"
-	"github.com/mojeico/gqlgen-golang/graph/model"
-	"github.com/mojeico/gqlgen-golang/internal/models"
+	"github.com/mojeico/gqlgen-golang/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
-
 	"time"
 )
 
 type UserRepo interface {
-	GetAllUsers() ([]*models.User, error)
-	CreateUser(meetup model.NewUser) (*models.User, error)
-	GetUserByID(id string) (*models.User, error)
+	GetAllUsers() ([]*model.User, error)
+	CreateUser(meetup model.NewUser) (*model.User, error)
+	GetUserByID(id string) (*model.User, error)
+	GetUserByEmail(email string) (*model.User, error)
+	GetUserByUserName(userName string) (*model.User, error)
+	RegistrationUser(user model.User) (string, error)
 }
 
 type userRepo struct {
@@ -28,14 +28,14 @@ func NewUserRepo(client *mongo.Client) UserRepo {
 	}
 }
 
-func (repo *userRepo) GetAllUsers() ([]*models.User, error) {
+func (repo *userRepo) GetAllUsers() ([]*model.User, error) {
 
 	collection := repo.client.Database("myapp").Collection("user")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	filter := bson.D{{}}
 
-	var tasks []*models.User
+	var tasks []*model.User
 
 	cur, err := collection.Find(ctx, filter)
 	if err != nil {
@@ -43,7 +43,7 @@ func (repo *userRepo) GetAllUsers() ([]*models.User, error) {
 	}
 
 	for cur.Next(ctx) {
-		var t *models.User
+		var t *model.User
 		err := cur.Decode(&t)
 		if err != nil {
 			return tasks, err
@@ -66,29 +66,73 @@ func (repo *userRepo) GetAllUsers() ([]*models.User, error) {
 
 }
 
-func (repo *userRepo) CreateUser(meetup model.NewUser) (*models.User, error) {
+func (repo *userRepo) CreateUser(newUser model.NewUser) (*model.User, error) {
 
 	ctx := context.Background()
 
 	coll := repo.client.Database("myapp").Collection("user")
 
-	_, err := coll.InsertOne(ctx, &meetup)
+	_, err := coll.InsertOne(ctx, &newUser)
 
-	return &models.User{}, err
+	return &model.User{}, err
 }
 
-func (repo *userRepo) GetUserByID(id string) (*models.User, error) {
+func (repo *userRepo) RegistrationUser(user model.User) (string, error) {
+	ctx := context.Background()
+
+	coll := repo.client.Database("myapp").Collection("user")
+
+	result, err := coll.InsertOne(ctx, &user)
+
+	id := result.InsertedID.(primitive.ObjectID)
+
+	return id.Hex(), err
+}
+
+func (repo *userRepo) GetUserByID(id string) (*model.User, error) {
 
 	collection := repo.client.Database("myapp").Collection("user")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	mongoId, _ := primitive.ObjectIDFromHex(id)
 
-	var user models.User
+	var user model.User
 	err := collection.FindOne(ctx, bson.M{"_id": mongoId}).Decode(&user)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+
+	return &user, err
+
+}
+
+func (repo *userRepo) GetUserByEmail(email string) (*model.User, error) {
+
+	collection := repo.client.Database("myapp").Collection("user")
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	var user model.User
+	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, err
+
+}
+
+func (repo *userRepo) GetUserByUserName(userName string) (*model.User, error) {
+
+	collection := repo.client.Database("myapp").Collection("user")
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	var user model.User
+	err := collection.FindOne(ctx, bson.M{"username": userName}).Decode(&user)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &user, err

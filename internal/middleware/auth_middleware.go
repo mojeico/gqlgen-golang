@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/golang-jwt/jwt"
 	"github.com/golang-jwt/jwt/request"
-	"github.com/mojeico/gqlgen-golang/internal/models"
+	"github.com/mojeico/gqlgen-golang/internal/model"
 	"github.com/mojeico/gqlgen-golang/internal/repository"
 	"github.com/pkg/errors"
 	"net/http"
@@ -82,7 +82,7 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 
 }
 
-func GetCurrentUserFromContext(ctx context.Context) (*models.User, error) {
+func GetCurrentUserFromContext(ctx context.Context) (*model.User, error) {
 
 	errNoUserInContext := "no user in context"
 
@@ -90,7 +90,7 @@ func GetCurrentUserFromContext(ctx context.Context) (*models.User, error) {
 		return nil, errors.New(errNoUserInContext)
 	}
 
-	user, ok := ctx.Value(CurrentUserKey).(*models.User)
+	user, ok := ctx.Value(CurrentUserKey).(*model.User)
 	if !ok || user.ID == "" {
 		return nil, errors.New(errNoUserInContext)
 	}

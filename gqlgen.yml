@@ -12,9 +12,9 @@ exec:
 #   filename: graph/generated/federation.go
 #   package: generated
 
-# Where should any generated models go?
+# Where should any generated model go?
 model:
-  filename: graph/model/models_gen.go
+  filename: internal/model/models_gen.go
   package: model
 
 
@@ -24,7 +24,7 @@ resolver:
   dir: graph  # in my case changed to app/resolver
   package: graph #  changed to resolver
 
-# Optional: turn on use `gqlgen:"fieldName"` tags in your models
+# Optional: turn on use `gqlgen:"fieldName"` tags in your model
 # struct_tag: json
 
 # Optional: turn on to use []Thing instead of []*Thing
@@ -36,7 +36,7 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "test/graph/model"
+  - "github.com/mojeico/gqlgen-golang/internal/model"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -56,12 +56,12 @@ models:
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
   User:
-    model: github.com/mojeico/gqlgen-golang/internal/models.User
+    model: github.com/mojeico/gqlgen-golang/internal/model.User
     fields:
       meetups:
         resolver: true
   Meetup:
-    model: github.com/mojeico/gqlgen-golang/internal/models.Meetup
+    model: github.com/mojeico/gqlgen-golang/internal/model.Meetup
     fields:
       user:
         resolver: true

@@ -1,8 +1,32 @@
+type AuthResponse{
+    authToken: AuthToken!
+    user: User!
+}
+type AuthToken{
+    accesToken: String!
+    expiredAt: Int!
+
+}
+
+input RegisterInput {
+    username: String!
+    email: String!
+    password: String!
+    confirmPassword: String!
+    firstName: String!
+    lastName: String!
+}
+
+
 type User {
     id: ID!
     username: String!
     email: String!
-    meetups: [Meetup!]!
+    firstName: String!
+    lastName: String!
+    updatedAt: Int!
+    cratedAt: Int!
+    deletedAt: Int!
 }
 
 
@@ -10,6 +34,8 @@ input NewUser {
     username: String!
     email: String!
 }
+
+
 
 type Meetup {
     id: ID!
@@ -27,13 +53,20 @@ input MeetupFilter{
     name: String
 }
 
+
+
 input UpdateMeetup {
     name: String
     description: String
 }
 
 
+
+
+
 type Mutation{
+    register(input: RegisterInput!):AuthResponse!
+
     createMeetup(input: NewMeetup!): Meetup!
     updateMeetup(id: ID!, input: UpdateMeetup): Meetup!
     deleteMeetup(id:ID!): Boolean

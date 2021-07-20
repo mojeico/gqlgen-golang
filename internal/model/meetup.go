@@ -1,4 +1,4 @@
-package models
+package model
 
 type Meetup struct {
 	ID          string `json:"_id,omitempty" bson:"_id,omitempty"`

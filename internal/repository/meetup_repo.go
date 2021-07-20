@@ -3,8 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/mojeico/gqlgen-golang/graph/model"
-	"github.com/mojeico/gqlgen-golang/internal/models"
+	"github.com/mojeico/gqlgen-golang/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,10 +13,10 @@ import (
 )
 
 type MeetupsRepo interface {
-	GetAllMeetups(filter *model.MeetupFilter, limit int64, offset int64) ([]*models.Meetup, error)
-	CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error)
-	GetMeetupByID(id string) (*models.Meetup, error)
-	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error)
+	GetAllMeetups(filter *model.MeetupFilter, limit int64, offset int64) ([]*model.Meetup, error)
+	CreateMeetup(meetup model.NewMeetup) (*model.Meetup, error)
+	GetMeetupByID(id string) (*model.Meetup, error)
+	UpdateMeetup(id string, meetup *model.UpdateMeetup) (*model.Meetup, error)
 	DeleteMeetup(id string) (*bool, error)
 }
 
@@ -42,7 +41,7 @@ func (repo meetupsRepo) DeleteMeetup(id string) (*bool, error) {
 	return &resultBool, err
 }
 
-func (repo meetupsRepo) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*models.Meetup, error) {
+func (repo meetupsRepo) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*model.Meetup, error) {
 
 	collection := repo.client.Database("myapp").Collection("meetup")
 	mongoId, _ := primitive.ObjectIDFromHex(id)
@@ -58,7 +57,7 @@ func (repo meetupsRepo) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*mo
 		},
 	)
 
-	var updatedModel models.Meetup
+	var updatedModel model.Meetup
 
 	err = collection.FindOne(context.Background(), bson.M{"_id": mongoId}).Decode(&updatedModel)
 
@@ -69,7 +68,7 @@ func (repo meetupsRepo) UpdateMeetup(id string, meetup *model.UpdateMeetup) (*mo
 	return &updatedModel, err
 }
 
-func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, offset int64) ([]*models.Meetup, error) {
+func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, offset int64) ([]*model.Meetup, error) {
 
 	collection := repo.client.Database("myapp").Collection("meetup")
 
@@ -83,7 +82,7 @@ func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, 
 		}}}
 	}
 
-	var tasks []*models.Meetup
+	var tasks []*model.Meetup
 
 	opts := options.FindOptions{
 		Skip:  &offset,
@@ -96,7 +95,7 @@ func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, 
 	}
 
 	for cur.Next(ctx) {
-		var t *models.Meetup
+		var t *model.Meetup
 		err := cur.Decode(&t)
 		if err != nil {
 			return tasks, err
@@ -119,7 +118,7 @@ func (repo *meetupsRepo) GetAllMeetups(filter *model.MeetupFilter, limit int64, 
 
 }
 
-func (repo *meetupsRepo) CreateMeetup(meetup model.NewMeetup) (*models.Meetup, error) {
+func (repo *meetupsRepo) CreateMeetup(meetup model.NewMeetup) (*model.Meetup, error) {
 
 	ctx := context.Background()
 
@@ -127,17 +126,17 @@ func (repo *meetupsRepo) CreateMeetup(meetup model.NewMeetup) (*models.Meetup, e
 
 	_, err := coll.InsertOne(ctx, &meetup)
 
-	return &models.Meetup{}, err
+	return &model.Meetup{}, err
 }
 
-func (repo *meetupsRepo) GetMeetupByID(id string) (*models.Meetup, error) {
+func (repo *meetupsRepo) GetMeetupByID(id string) (*model.Meetup, error) {
 
 	collection := repo.client.Database("myapp").Collection("meetup")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	mongoId, _ := primitive.ObjectIDFromHex(id)
 
-	var meetup models.Meetup
+	var meetup model.Meetup
 	err := collection.FindOne(ctx, bson.M{"_id": mongoId}).Decode(&meetup)
 
 	if err != nil {
