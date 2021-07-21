@@ -57,14 +57,9 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   User:
     model: github.com/mojeico/gqlgen-golang/internal/model.User
-    fields:
-      meetups:
-        resolver: true
   Meetup:
     model: github.com/mojeico/gqlgen-golang/internal/model.Meetup
-    fields:
-      user:
-        resolver: true
+
   RegisterInput:
     model: github.com/mojeico/gqlgen-golang/internal/model.RegisterInput
 

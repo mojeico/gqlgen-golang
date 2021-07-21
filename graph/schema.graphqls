@@ -47,7 +47,6 @@ type Meetup {
     id: ID!
     name: String!
     description: String!
-    user: User!
 }
 
 input NewMeetup{
