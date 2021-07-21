@@ -7,6 +7,7 @@ import (
 	"github.com/mojeico/gqlgen-golang/internal/model"
 	"github.com/mojeico/gqlgen-golang/internal/repository"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 	"time"
@@ -28,21 +29,33 @@ func AuthMiddleware(userRepo repository.UserRepo) func(handler http.Handler) htt
 			token, err := parseToken(r)
 
 			if err != nil {
-				next.ServeHTTP(w, r)
+				logrus.WithFields(logrus.Fields{
+					"method": "AuthMiddleware",
+					"file":   "auth_middleware.go",
+					"time":   time.Now().Format("01-02-2006 15:04:05"),
+				}).Error(err.Error())
 				return
 			}
 
 			claims, ok := token.Claims.(jwt.MapClaims)
 
 			if !ok || !token.Valid {
-				next.ServeHTTP(w, r)
+				logrus.WithFields(logrus.Fields{
+					"method": "AuthMiddleware",
+					"file":   "auth_middleware.go",
+					"time":   time.Now().Format("01-02-2006 15:04:05"),
+				}).Error(err.Error())
 				return
 			}
 
 			user, err := userRepo.GetUserByID(claims["jti"].(string))
 
 			if err != nil {
-				next.ServeHTTP(w, r)
+				logrus.WithFields(logrus.Fields{
+					"method": "AuthMiddleware",
+					"file":   "auth_middleware.go",
+					"time":   time.Now().Format("01-02-2006 15:04:05"),
+				}).Error(err.Error())
 				return
 			}
 

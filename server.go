@@ -11,7 +11,6 @@ import (
 	"github.com/mojeico/gqlgen-golang/internal/repository"
 	"github.com/mojeico/gqlgen-golang/internal/service"
 	"github.com/mojeico/gqlgen-golang/pkg/database"
-	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"os"
@@ -43,11 +42,11 @@ func main() {
 	}))
 
 	router := chi.NewRouter()
-	router.Use(cors.New(cors.Options{
+	/*	router.Use(cors.New(cors.Options{
 		AllowedOrigins:     []string{"http://localhost:8080"},
 		OptionsPassthrough: true,
 		//Debug:              true,
-	}).Handler)
+	}).Handler)*/
 
 	router.Use(middleware.RequestID)
 	//router.Use(middleware.Logger)
