@@ -19,6 +19,13 @@ func (r *meetupResolver) User(ctx context.Context, obj *model.Meetup) (*model.Us
 }
 
 func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error) {
+
+	err := input.IsValidate()
+
+	if err != nil {
+		return nil, err
+	}
+
 	user, _ := r.UserService.GetUserByEmail(input.Email)
 
 	if user != nil {
@@ -42,7 +49,7 @@ func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInp
 		UpdatedAt: currentTime,
 	}
 
-	err := newUser.HashPassword(input.Password)
+	err = newUser.HashPassword(input.Password)
 
 	if err != nil {
 		return nil, errors.New("problem with password")

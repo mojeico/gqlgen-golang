@@ -65,4 +65,7 @@ models:
     fields:
       user:
         resolver: true
+  RegisterInput:
+    model: github.com/mojeico/gqlgen-golang/internal/model.RegisterInput
+
 
