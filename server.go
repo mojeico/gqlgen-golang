@@ -46,11 +46,11 @@ func main() {
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:     []string{"http://localhost:8080"},
 		OptionsPassthrough: true,
-		Debug:              true,
+		//Debug:              true,
 	}).Handler)
 
 	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
+	//router.Use(middleware.Logger)
 	router.Use(customMiddleware.AuthMiddleware(userRepo))
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))

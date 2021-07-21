@@ -6,6 +6,8 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/mojeico/gqlgen-golang/pkg/logger"
 	"time"
 
 	"github.com/mojeico/gqlgen-golang/graph/generated"
@@ -22,18 +24,24 @@ func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInp
 	err := input.IsValidate()
 
 	if err != nil {
-		return nil, err
+		logMessage := fmt.Sprintf("Email %s already registred", input.Email)
+		logger.LoginRegisterLoggerWarn("Register", "schema.resolvers.go", logMessage)
+		return nil, errors.New("problem with inserting data")
 	}
 
 	user, _ := r.UserService.GetUserByEmail(input.Email)
 
 	if user != nil {
+		logMessage := fmt.Sprintf("Email %s already registred", input.Email)
+		logger.LoginRegisterLoggerWarn("Register", "schema.resolvers.go", logMessage)
 		return nil, errors.New("email already use")
 	}
 
 	user, _ = r.UserService.GetUserByUserName(input.Username)
 
 	if user != nil {
+		logMessage := fmt.Sprintf("Username %s already registred", input.Username)
+		logger.LoginRegisterLoggerWarn("Register", "schema.resolvers.go", logMessage)
 		return nil, errors.New("username already use")
 	}
 
@@ -51,12 +59,16 @@ func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInp
 	err = newUser.HashPassword(input.Password)
 
 	if err != nil {
+		logMessage := fmt.Sprintf("Problem with password - %s ", err.Error())
+		logger.LoginRegisterLoggerError("Register", "schema.resolvers.go", logMessage)
 		return nil, errors.New("problem with password")
 	}
 
 	id, err := r.UserService.RegistrationUser(newUser)
 
 	if err != nil {
+		logMessage := fmt.Sprintf("Something wrong with registration - %s ", err.Error())
+		logger.LoginRegisterLoggerError("Register", "schema.resolvers.go", logMessage)
 		return nil, errors.New("something wrong with registration")
 	}
 
@@ -64,8 +76,13 @@ func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInp
 	token, err := newUser.GenToken()
 
 	if err != nil {
+		logMessage := fmt.Sprintf("Something wrong with token - %s ", err.Error())
+		logger.LoginRegisterLoggerError("Register", "schema.resolvers.go", logMessage)
 		return nil, errors.New("something wrong with token")
 	}
+
+	logMessage := fmt.Sprintf("User was registred successfully with username - %s and email - %s ", input.Username, input.Email)
+	logger.LoginRegisterLoggerInfo("Register", "schema.resolvers.go", logMessage)
 
 	return &model.AuthResponse{
 		AuthToken: token,
@@ -77,20 +94,29 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (*
 	user, err := r.UserService.GetUserByEmail(input.Email)
 
 	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't get user by email %s - %s ", input.Email, err.Error())
+		logger.LoginRegisterLoggerError("Login", "schema.resolvers.go", logMessage)
 		return nil, ErrorBadCredential
 	}
 
 	err = user.ComparePassword(input.Password)
 
 	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't compare password for %s - %s ", input.Email, err.Error())
+		logger.LoginRegisterLoggerError("Login", "schema.resolvers.go", logMessage)
 		return nil, ErrorBadCredential
 	}
 
 	token, err := user.GenToken()
 
 	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't generate token for %s - %s ", input.Email, err.Error())
+		logger.LoginRegisterLoggerError("Login", "schema.resolvers.go", logMessage)
 		return nil, errors.New("something wrong with token")
 	}
+
+	logMessage := fmt.Sprintf("User was logined successfully with email - %s ", input.Email)
+	logger.LoginRegisterLoggerInfo("Login", "schema.resolvers.go", logMessage)
 
 	return &model.AuthResponse{
 		AuthToken: token,
@@ -102,6 +128,8 @@ func (r *mutationResolver) CreateMeetup(ctx context.Context, input model.NewMeet
 	currentUser, err := middleware.GetCurrentUserFromContext(ctx)
 
 	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't get user from context - %s", err.Error())
+		logger.SystemLoggerError("CreateMeetup", "schema.resolvers.go", logMessage)
 		return nil, UserUnauthenticated
 	}
 
@@ -111,42 +139,121 @@ func (r *mutationResolver) CreateMeetup(ctx context.Context, input model.NewMeet
 		UserID:      currentUser.ID,
 	}
 
-	return r.MeetupsService.CreateMeetup(newMeetup)
+	meetup, err := r.MeetupsService.CreateMeetup(newMeetup)
+
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't create meetup - %s", err.Error())
+		logger.CrudLoggerError(ctx, "CreateMeetup", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("Meetup was created successfully with name - %s ", input.Name)
+	logger.CrudLoggerInfo(ctx, "CreateMeetup", "schema.resolvers.go", logMessage)
+
+	return meetup, nil
 }
 
 func (r *mutationResolver) UpdateMeetup(ctx context.Context, id string, input *model.UpdateMeetup) (*model.Meetup, error) {
 	meetup, err := r.MeetupsService.UpdateMeetup(id, input)
-	return meetup, err
+
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't update meetup - %s", err.Error())
+		logger.CrudLoggerError(ctx, "UpdateMeetup", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("Meetup was updated successfully with name - %s ", input.Name)
+	logger.CrudLoggerInfo(ctx, "UpdateMeetup", "schema.resolvers.go", logMessage)
+
+	return meetup, nil
 }
 
 func (r *mutationResolver) DeleteMeetup(ctx context.Context, id string) (*bool, error) {
 	result, err := r.MeetupsService.DeleteMeetup(id)
-	return result, err
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't delete meetup - %s", err.Error())
+		logger.CrudLoggerError(ctx, "DeleteMeetup", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("Meetup was deleted successfully with id - %s ", id)
+	logger.CrudLoggerInfo(ctx, "DeleteMeetup", "schema.resolvers.go", logMessage)
+
+	return result, nil
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
 	user, err := r.UserService.CreateUser(input)
-	return user, err
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't create user - %s", err.Error())
+		logger.CrudLoggerError(ctx, "CreateUser", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("User was creates successfully with email - %s ", input.Email)
+	logger.CrudLoggerInfo(ctx, "CreateUser", "schema.resolvers.go", logMessage)
+
+	return user, nil
 }
 
 func (r *queryResolver) GetAllMeetups(ctx context.Context, filter *model.MeetupFilter, limit *int, offset *int) ([]*model.Meetup, error) {
 	meetup, err := r.MeetupsService.GetAllMeetups(filter, *limit, *offset)
-	return meetup, err
+
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't get all meetups - %s", err.Error())
+		logger.CrudLoggerError(ctx, "GetAllMeetups", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("Get all meetups  successfully ")
+	logger.CrudLoggerInfo(ctx, "GetAllMeetups", "schema.resolvers.go", logMessage)
+
+	return meetup, nil
 }
 
 func (r *queryResolver) GetMeetupByID(ctx context.Context, id string) (*model.Meetup, error) {
 	meetup, err := r.MeetupsService.GetMeetupByID(id)
-	return meetup, err
+
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't get meetup by id  - %s", err.Error())
+		logger.CrudLoggerError(ctx, "GetMeetupByID", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("Get meetup by id successfully with id %s ", id)
+	logger.CrudLoggerInfo(ctx, "GetMeetupByID", "schema.resolvers.go", logMessage)
+
+	return meetup, nil
 }
 
 func (r *queryResolver) GetAllUsers(ctx context.Context) ([]*model.User, error) {
 	user, err := r.UserService.GetAllUsers()
-	return user, err
+
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't get all users - %s", err.Error())
+		logger.CrudLoggerError(ctx, "GetAllUsers", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("Get all users successfully")
+	logger.CrudLoggerInfo(ctx, "GetAllUsers", "schema.resolvers.go", logMessage)
+
+	return user, nil
 }
 
 func (r *queryResolver) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	user, err := r.UserService.GetUserByID(id)
-	return user, err
+
+	if err != nil {
+		logMessage := fmt.Sprintf("Couldn't  get user by id  %s", err.Error())
+		logger.CrudLoggerError(ctx, "GetUserByID", "schema.resolvers.go", logMessage)
+		return nil, UserUnauthenticated
+	}
+
+	logMessage := fmt.Sprintf("Get user by id successfully with id %s ", id)
+	logger.CrudLoggerInfo(ctx, "GetUserByID", "schema.resolvers.go", logMessage)
+
+	return user, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
