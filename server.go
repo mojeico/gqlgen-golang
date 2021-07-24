@@ -4,7 +4,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mojeico/gqlgen-golang/graph"
 	"github.com/mojeico/gqlgen-golang/graph/generated"
 	customMiddleware "github.com/mojeico/gqlgen-golang/internal/middleware"
@@ -48,12 +48,15 @@ func main() {
 		//Debug:              true,
 	}).Handler)*/
 
-	router.Use(middleware.RequestID)
 	//router.Use(middleware.Logger)
-	router.Use(customMiddleware.AuthMiddleware(userRepo))
+	router.Use(middleware.RequestID)
+
+	router.Group(func(router chi.Router) {
+		router.Use(customMiddleware.AuthMiddleware(userRepo))
+		router.Handle("/query", srv)
+	})
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
