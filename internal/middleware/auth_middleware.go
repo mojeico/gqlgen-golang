@@ -59,6 +59,7 @@ func AuthMiddleware(userRepo repository.UserRepo) func(handler http.Handler) htt
 				return
 			}
 
+			// ad user in context
 			ctx := context.WithValue(r.Context(), CurrentUserKey, user)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -108,6 +109,7 @@ func GetCurrentUserFromContext(ctx context.Context) (*model.User, error) {
 		return nil, errors.New(errNoUserInContext)
 	}
 
+	// get user from context
 	user, ok := ctx.Value(CurrentUserKey).(*model.User)
 	if !ok || user.ID == "" {
 		return nil, errors.New(errNoUserInContext)
