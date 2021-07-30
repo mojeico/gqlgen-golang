@@ -16,7 +16,7 @@ import (
 var CurrentUserKey = "currentUser"
 
 const (
-	tokenTime = 24 * 7 * time.Hour // 7 days for token
+	// tokenTime = 24 * 7 * time.Hour // 7 days for token
 	signInKey = "registerKey"
 )
 
